@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>San Jose Weather</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #eef4fb;
+      color: #1d2a3a;
+    }
+    main { text-align: center; }
+    .temp { font-size: 5rem; font-weight: 600; margin: 0.5rem 0; }
+    .desc { font-size: 1.5rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>San Jose, California</h1>
+    {% if weather %}
+      <p class="temp">{{ weather.temperature }}&deg;F</p>
+      <p class="desc">{{ weather.description }}</p>
+    {% else %}
+      <p>{{ error }}</p>
+    {% endif %}
+  </main>
+</body>
+</html>
