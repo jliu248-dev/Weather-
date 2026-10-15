@@ -1,10 +1,12 @@
 import requests
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+ZIPPOPOTAM_URL = "https://api.zippopotam.us/us"
 SAN_JOSE = {"latitude": 37.3382, "longitude": -121.8863}
+WEATHER_ERROR = "Could not load the weather right now. Please try again later."
 
 # WMO weather interpretation codes used by Open-Meteo.
 WEATHER_CODES = {
@@ -39,12 +41,17 @@ WEATHER_CODES = {
 }
 
 
-def fetch_weather():
+class ZipNotFound(Exception):
+    pass
+
+
+def fetch_weather(latitude, longitude):
     params = {
-        **SAN_JOSE,
+        "latitude": latitude,
+        "longitude": longitude,
         "current": "temperature_2m,weather_code",
         "temperature_unit": "fahrenheit",
-        "timezone": "America/Los_Angeles",
+        "timezone": "auto",
     }
     response = requests.get(FORECAST_URL, params=params, timeout=10)
     response.raise_for_status()
@@ -55,15 +62,50 @@ def fetch_weather():
     }
 
 
+def lookup_zip(zip_code):
+    response = requests.get(f"{ZIPPOPOTAM_URL}/{zip_code}", timeout=10)
+    if response.status_code == 404:
+        raise ZipNotFound(zip_code)
+    response.raise_for_status()
+    place = response.json()["places"][0]
+    return {
+        "name": f"{place['place name']}, {place['state abbreviation']}",
+        "latitude": float(place["latitude"]),
+        "longitude": float(place["longitude"]),
+    }
+
+
 @app.route("/")
 def index():
     try:
-        weather = fetch_weather()
+        weather = fetch_weather(**SAN_JOSE)
         error = None
     except (requests.RequestException, KeyError, ValueError):
         weather = None
-        error = "Could not load the weather right now. Please try again later."
+        error = WEATHER_ERROR
     return render_template("index.html", weather=weather, error=error)
+
+
+@app.route("/zip")
+def zip_weather():
+    zip_code = request.args.get("zip", "").strip()
+    place = weather = error = None
+    if zip_code:
+        if not (len(zip_code) == 5 and zip_code.isdigit()):
+            error = "Please enter a 5-digit US zip code."
+        else:
+            try:
+                place = lookup_zip(zip_code)
+                weather = fetch_weather(place["latitude"], place["longitude"])
+            except ZipNotFound:
+                place = None
+                error = f"The zip code {zip_code} does not exist."
+            except (requests.RequestException, KeyError, IndexError, ValueError):
+                place = None
+                error = WEATHER_ERROR
+    return render_template(
+        "zip.html", zip_code=zip_code, place=place, weather=weather, error=error
+    )
 
 
 if __name__ == "__main__":

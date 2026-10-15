@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Weather{% endblock %}</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #eef4fb;
+      color: #1d2a3a;
+    }
+    main { text-align: center; padding: 0 16px; }
+    .temp { font-size: 5rem; font-weight: 600; margin: 0.5rem 0; }
+    .desc { font-size: 1.5rem; }
+    .error { color: #b3261e; font-weight: 600; }
+    form { margin: 1rem 0; }
+    input, button { font: inherit; padding: 0.4rem 0.6rem; }
+    nav { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
